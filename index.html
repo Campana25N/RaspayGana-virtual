@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Raspa y Gana Virtual</title>
+
 <style>
   body {
     margin: 0;
@@ -16,7 +17,7 @@
 
   #scratchContainer {
     position: relative;
-    width: 95%;
+    width: 100%;
     max-width: 800px;
     aspect-ratio: 9 / 5;
     overflow: hidden;
@@ -31,7 +32,6 @@
     object-fit: cover;
   }
 
-  /* ✔ Mantengo EXACTAMENTE tus posiciones y tamaños */
   #raspado {
     position: absolute;
     left: 70%;
@@ -44,81 +44,34 @@
   }
 </style>
 </head>
+
 <body>
 
 <div id="scratchContainer">
-  <img id="premio" src="" alt="Premio">
+  <img id="premio" src="premio1.png" alt="Premio">
   <canvas id="raspado"></canvas>
 </div>
 
 <script>
 const canvas = document.getElementById("raspado");
 const ctx = canvas.getContext("2d");
-const premioImg = document.getElementById("premio");
 
-// Lista de premios
-const premios = [
-  "premio1.png",
-  "premio2.png",
-  "premio3.png",
-  "premio4.png",
-  "premio5.png",
-  "premio6.png",
-  "premio7.png",
-  "premio8.png",
-  "premio9.png",
-  "premio10.png"
-];
+// 🎨 Canvas auxiliar para el degradado
+const gradCanvas = document.createElement("canvas");
+const gradCtx = gradCanvas.getContext("2d");
 
-// Premio aleatorio
-premioImg.src = premios[Math.floor(Math.random() * premios.length)];
-
-
-// ---------------------------
-// ⭐ DEGRADADO ANIMADO METÁLICO
-// ---------------------------
-let shift = 0;
-
-function animateGradient() {
-  shift += 0.01;
-
-  const grad = ctx.createLinearGradient(
-    0, 0,
-    canvas.width * (1 + Math.sin(shift) * 0.5), 
-    canvas.height * (1 + Math.cos(shift) * 0.5)
-  );
-
-  grad.addColorStop(0, "#d0d0d0");
-  grad.addColorStop(0.5, "#f8f8f8");
-  grad.addColorStop(1, "#9a9a9a");
-
-  ctx.globalCompositeOperation = "source-over";
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  requestAnimationFrame(animateGradient);
-}
-
-
-// ---------------------------
-// 🔧 Ajuste responsivo del canvas
-// ---------------------------
+// 🧩 Ajustar tamaño responsivo
 function resizeCanvas() {
   canvas.width = canvas.offsetWidth;
   canvas.height = canvas.offsetHeight;
+
+  gradCanvas.width = canvas.width;
+  gradCanvas.height = canvas.height;
 }
 resizeCanvas();
-window.addEventListener("resize", () => {
-  resizeCanvas();
-});
+window.addEventListener("resize", resizeCanvas);
 
-// Iniciar animación del gris metálico
-animateGradient();
-
-
-// ---------------------------
-// ✏ Función de raspado
-// ---------------------------
+// ✏️ Raspado
 let isDrawing = false;
 
 function startScratch(e) {
@@ -133,13 +86,14 @@ function endScratch() {
 
 function scratch(e) {
   if (!isDrawing) return;
+
   const rect = canvas.getBoundingClientRect();
   const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
   const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
 
   ctx.globalCompositeOperation = "destination-out";
   ctx.beginPath();
-  ctx.arc(x, y, 40, 0, Math.PI * 2);
+  ctx.arc(x, y, canvas.width * 0.05, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -150,10 +104,46 @@ canvas.addEventListener("mousemove", scratch);
 canvas.addEventListener("touchstart", startScratch);
 canvas.addEventListener("touchend", endScratch);
 canvas.addEventListener("touchmove", scratch);
+
+// 🎆 Degradado animado
+let shift = 0;
+
+function drawGradient() {
+  const w = gradCanvas.width;
+  const h = gradCanvas.height;
+
+  const grad = gradCtx.createLinearGradient(
+    0, 0,
+    w * (1 + Math.sin(shift) * 0.5),
+    h
+  );
+
+  grad.addColorStop(0, "#d0d0d0");
+  grad.addColorStop(0.5, "#ffffff");
+  grad.addColorStop(1, "#9a9a9a");
+
+  gradCtx.fillStyle = grad;
+  gradCtx.fillRect(0, 0, w, h);
+}
+
+function animate() {
+  shift += 0.02;
+
+  drawGradient();
+
+  // Copiar el degradado sin borrar el raspado
+  ctx.globalCompositeOperation = "source-over";
+  ctx.drawImage(gradCanvas, 0, 0);
+
+  requestAnimationFrame(animate);
+}
+
+animate();
 </script>
 
 </body>
 </html>
+
 
 
 
